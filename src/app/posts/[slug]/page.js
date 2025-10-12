@@ -59,10 +59,10 @@ const PagePost = () => {
       }
     };
 
-    if (slug && user) {
+    if (slug) {
       loadPost();
     }
-  }, []); // ❌ BUG #3: falta slug e user nas dependências
+  }, [slug]);
 
   // Handler para quando um comentário é adicionado
   const handleCommentAdded = async () => {
