@@ -71,18 +71,6 @@ export class DatabaseService {
         .single();
 
       if (error) {
-        log.error("Erro ao buscar post por slug", {
-          slug,
-          error: error.message,
-          operation: "getPostBySlug",
-        });
-        eventLogger.logEventError(
-          EVENT_STEPS.DATABASE,
-          EVENT_OPERATIONS.DB_QUERY_FAILED,
-          null,
-          error,
-          { slug, operation: "getPostBySlug" }
-        );
         throw error;
       }
 
@@ -90,10 +78,7 @@ export class DatabaseService {
         const notFoundError = new Error(
           `Post com o slug ${slug} não foi encontrado`
         );
-        log.warn("Post não encontrado por slug", {
-          slug,
-          operation: "getPostBySlug",
-        });
+
         throw notFoundError;
       }
 
@@ -102,27 +87,8 @@ export class DatabaseService {
         post.comments?.filter((comment) => comment.parentId === null) || [];
       post.comments = mainComments;
 
-      log.info("Post encontrado por slug", {
-        slug,
-        post_id: post.id,
-        comments_count: mainComments.length,
-        operation: "getPostBySlug",
-      });
-
       return post;
     } catch (error) {
-      log.error("Falha ao obter post por slug", {
-        slug,
-        error: error.message,
-        operation: "getPostBySlug",
-      });
-      eventLogger.logEventError(
-        EVENT_STEPS.DATABASE,
-        EVENT_OPERATIONS.DB_QUERY_FAILED,
-        null,
-        error,
-        { slug, operation: "getPostBySlug" }
-      );
       throw error;
     }
   }
@@ -136,18 +102,6 @@ export class DatabaseService {
         .single();
 
       if (error) {
-        log.error("Erro ao buscar post por ID", {
-          postId,
-          error: error.message,
-          operation: "getPostById",
-        });
-        eventLogger.logEventError(
-          EVENT_STEPS.DATABASE,
-          EVENT_OPERATIONS.DB_QUERY_FAILED,
-          null,
-          error,
-          { postId, operation: "getPostById" }
-        );
         throw error;
       }
 
@@ -155,34 +109,12 @@ export class DatabaseService {
         const notFoundError = new Error(
           `Post com ID ${postId} não foi encontrado`
         );
-        log.warn("Post não encontrado por ID", {
-          postId,
-          operation: "getPostById",
-        });
+
         throw notFoundError;
       }
 
-      log.info("Post encontrado por ID", {
-        postId,
-        slug: post.slug,
-        title: post.title,
-        operation: "getPostById",
-      });
-
       return post;
     } catch (error) {
-      log.error("Falha ao obter post por ID", {
-        postId,
-        error: error.message,
-        operation: "getPostById",
-      });
-      eventLogger.logEventError(
-        EVENT_STEPS.DATABASE,
-        EVENT_OPERATIONS.DB_QUERY_FAILED,
-        null,
-        error,
-        { postId, operation: "getPostById" }
-      );
       throw error;
     }
   }
@@ -197,18 +129,6 @@ export class DatabaseService {
         .single();
 
       if (fetchError) {
-        log.error("Erro ao buscar post para incrementar likes", {
-          postId,
-          error: fetchError.message,
-          operation: "incrementPostLikes",
-        });
-        eventLogger.logEventError(
-          EVENT_STEPS.DATABASE,
-          EVENT_OPERATIONS.DB_MUTATION_FAILED,
-          null,
-          fetchError,
-          { postId, operation: "incrementPostLikes" }
-        );
         throw fetchError;
       }
 
@@ -221,47 +141,11 @@ export class DatabaseService {
         .single();
 
       if (error) {
-        log.error("Erro ao incrementar likes", {
-          postId,
-          error: error.message,
-          operation: "incrementPostLikes",
-        });
-        eventLogger.logEventError(
-          EVENT_STEPS.DATABASE,
-          EVENT_OPERATIONS.DB_MUTATION_FAILED,
-          null,
-          error,
-          { postId, operation: "incrementPostLikes" }
-        );
         throw error;
       }
 
-      log.info("Likes incrementados com sucesso", {
-        postId,
-        new_likes: data.likes,
-        operation: "incrementPostLikes",
-      });
-      eventLogger.logEvent(
-        EVENT_STEPS.DATABASE,
-        EVENT_OPERATIONS.DB_MUTATION_SUCCESS,
-        null,
-        { postId, new_likes: data.likes, operation: "incrementPostLikes" }
-      );
-
       return data;
     } catch (error) {
-      log.error("Falha ao incrementar likes", {
-        postId,
-        error: error.message,
-        operation: "incrementPostLikes",
-      });
-      eventLogger.logEventError(
-        EVENT_STEPS.DATABASE,
-        EVENT_OPERATIONS.DB_MUTATION_FAILED,
-        null,
-        error,
-        { postId, operation: "incrementPostLikes" }
-      );
       throw error;
     }
   }
@@ -287,53 +171,11 @@ export class DatabaseService {
         .single();
 
       if (error) {
-        log.error("Erro ao criar comentário", {
-          error: error.message,
-          postId,
-          authorId,
-          parentId,
-          operation: "createComment",
-        });
-        eventLogger.logEventError(
-          EVENT_STEPS.DATABASE,
-          EVENT_OPERATIONS.DB_MUTATION_FAILED,
-          authorId,
-          error,
-          { postId, parentId, operation: "createComment" }
-        );
         throw error;
       }
 
-      log.info("Comentário criado com sucesso", {
-        comment_id: data.id,
-        postId,
-        authorId,
-        parentId,
-        operation: "createComment",
-      });
-      eventLogger.logEvent(
-        EVENT_STEPS.DATABASE,
-        EVENT_OPERATIONS.DB_MUTATION_SUCCESS,
-        authorId,
-        { comment_id: data.id, postId, parentId, operation: "createComment" }
-      );
-
       return data;
     } catch (error) {
-      log.error("Falha ao criar comentário", {
-        error: error.message,
-        postId,
-        authorId,
-        parentId,
-        operation: "createComment",
-      });
-      eventLogger.logEventError(
-        EVENT_STEPS.DATABASE,
-        EVENT_OPERATIONS.DB_MUTATION_FAILED,
-        authorId,
-        error,
-        { postId, parentId, operation: "createComment" }
-      );
       throw error;
     }
   }
@@ -352,41 +194,11 @@ export class DatabaseService {
         .order("createdAt", { ascending: true });
 
       if (error) {
-        log.error("Erro ao buscar respostas do comentário", {
-          parentId,
-          error: error.message,
-          operation: "getCommentReplies",
-        });
-        eventLogger.logEventError(
-          EVENT_STEPS.DATABASE,
-          EVENT_OPERATIONS.DB_QUERY_FAILED,
-          null,
-          error,
-          { parentId, operation: "getCommentReplies" }
-        );
         throw error;
       }
 
-      log.info("Respostas do comentário buscadas", {
-        parentId,
-        replies_count: replies?.length || 0,
-        operation: "getCommentReplies",
-      });
-
       return replies || [];
     } catch (error) {
-      log.error("Falha ao buscar respostas do comentário", {
-        parentId,
-        error: error.message,
-        operation: "getCommentReplies",
-      });
-      eventLogger.logEventError(
-        EVENT_STEPS.DATABASE,
-        EVENT_OPERATIONS.DB_QUERY_FAILED,
-        null,
-        error,
-        { parentId, operation: "getCommentReplies" }
-      );
       return [];
     }
   }
@@ -403,20 +215,10 @@ export class DatabaseService {
         .maybeSingle(); // ✅ maybeSingle() não dá erro se não encontrar
 
       if (existingUser) {
-        log.info("Usuário encontrado", {
-          username,
-          userId: existingUser.id,
-          operation: "getOrCreateUser",
-        });
         return existingUser;
       }
 
       // Se não existe, criar
-      log.info("Criando novo usuário", {
-        username,
-        operation: "getOrCreateUser",
-      });
-
       const { data: newUser, error: createError } = await db
         .from("User")
         .insert({
@@ -429,27 +231,11 @@ export class DatabaseService {
         .single();
 
       if (createError) {
-        log.error("Erro ao criar usuário", {
-          username,
-          error: createError.message,
-          operation: "getOrCreateUser",
-        });
         throw createError;
       }
 
-      log.info("Usuário criado com sucesso", {
-        username,
-        userId: newUser.id,
-        operation: "getOrCreateUser",
-      });
-
       return newUser;
     } catch (error) {
-      log.error("Falha em getOrCreateUser", {
-        username,
-        error: error.message,
-        operation: "getOrCreateUser",
-      });
       throw error;
     }
   }
@@ -463,41 +249,11 @@ export class DatabaseService {
         .single();
 
       if (error) {
-        log.error("Erro ao buscar usuário por username", {
-          username,
-          error: error.message,
-          operation: "getUserByUsername",
-        });
-        eventLogger.logEventError(
-          EVENT_STEPS.DATABASE,
-          EVENT_OPERATIONS.DB_QUERY_FAILED,
-          null,
-          error,
-          { username, operation: "getUserByUsername" }
-        );
         throw error;
       }
 
-      log.info("Usuário encontrado por username", {
-        username,
-        userId: user?.id,
-        operation: "getUserByUsername",
-      });
-
       return user;
     } catch (error) {
-      log.error("Falha ao buscar usuário por username", {
-        username,
-        error: error.message,
-        operation: "getUserByUsername",
-      });
-      eventLogger.logEventError(
-        EVENT_STEPS.DATABASE,
-        EVENT_OPERATIONS.DB_QUERY_FAILED,
-        null,
-        error,
-        { username, operation: "getUserByUsername" }
-      );
       throw error;
     }
   }
@@ -515,41 +271,11 @@ export class DatabaseService {
       const { count, error } = await query;
 
       if (error) {
-        log.error("Erro ao contar posts", {
-          error: error.message,
-          searchTerm,
-          operation: "getPostCount",
-        });
-        eventLogger.logEventError(
-          EVENT_STEPS.DATABASE,
-          EVENT_OPERATIONS.DB_QUERY_FAILED,
-          null,
-          error,
-          { searchTerm, operation: "getPostCount" }
-        );
         throw error;
       }
 
-      log.info("Posts contados com sucesso", {
-        count: count || 0,
-        searchTerm,
-        operation: "getPostCount",
-      });
-
       return count || 0;
     } catch (error) {
-      log.error("Falha ao contar posts", {
-        error: error.message,
-        searchTerm,
-        operation: "getPostCount",
-      });
-      eventLogger.logEventError(
-        EVENT_STEPS.DATABASE,
-        EVENT_OPERATIONS.DB_QUERY_FAILED,
-        null,
-        error,
-        { searchTerm, operation: "getPostCount" }
-      );
       return 0;
     }
   }
