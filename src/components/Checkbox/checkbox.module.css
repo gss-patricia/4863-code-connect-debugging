@@ -1,0 +1,39 @@
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--cinza-claro);
+}
+
+.checkbox {
+  display: none;
+}
+
+.checkmark {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--cinza);
+  border-radius: 4px;
+  position: relative;
+  transition: all 0.2s ease;
+  background: var(--grafite);
+}
+
+.checkbox:checked + .checkmark {
+  background: var(--verde-destaque);
+  border-color: var(--verde-destaque);
+}
+
+.checkbox:checked + .checkmark::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}

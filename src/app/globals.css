@@ -1,0 +1,52 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: linear-gradient(180deg, #0e1112 0%, #00090e 100%);
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Variáveis CSS para manter o design original */
+:root {
+  --cinza-escuro: #1a1a1a;
+  --grafite: #2d2d2d;
+  --cinza: #666666;
+  --cinza-medio: #999999;
+  --cinza-claro: #cccccc;
+  --branco: #ffffff;
+  --verde-destaque: #00ff88;
+  --font-family: "Inter", sans-serif;
+}
+
+.app-container {
+  width: 1200px;
+  max-width: 90%;
+  margin: 56px auto;
+  display: flex;
+  gap: 28px;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex-grow: 1;
+}
+
+a {
+  color: #81fe88;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%; /* 27px */
+  text-decoration-line: underline;
+}
+
+a:visited {
+  color: #81fe88;
+}
+
+::backdrop {
+  background-color: #171d1f;
+  opacity: 0.8;
+}
