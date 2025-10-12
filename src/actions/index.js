@@ -35,18 +35,17 @@ export async function postComment(post, formData) {
     } = await supabase.auth.getUser();
 
     if (error || !user) {
-      console.log("Auth error");
       throw new Error("Não autenticado");
     }
 
-    // ❌ BUG #4: authorId hardcoded como null
-    const authorId = null;
+    // ✅ USAR USUÁRIO AUTENTICADO ao invés de hardcoded
+    // Buscar ou criar o usuário no banco usando o email do Supabase
+    const username = user.email.split("@")[0];
+    const author = await database.getOrCreateUser(username);
 
-    await database.createComment(formData.get("text"), authorId, post.id);
+    await database.createComment(formData.get("text"), author.id, post.id);
     revalidatePath("/");
     revalidatePath(`/${post.slug}`);
-
-    // Sem logs!
   } catch (err) {
     console.error("Comment error:", err);
     throw err;
