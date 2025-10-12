@@ -1,6 +1,4 @@
 import db from "../../supabase/db";
-import { log } from "./logger";
-import { eventLogger, EVENT_STEPS, EVENT_OPERATIONS } from "./eventLogger";
 
 // Data layer para centralizar todas as consultas do Supabase
 export class DatabaseService {
@@ -32,19 +30,7 @@ export class DatabaseService {
       const { data: posts, error, count } = await query;
 
       if (error) {
-        log.error("Erro ao buscar posts", {
-          error: error.message,
-          page,
-          searchTerm,
-          operation: "getAllPosts",
-        });
-        eventLogger.logEventError(
-          EVENT_STEPS.DATABASE,
-          EVENT_OPERATIONS.DB_QUERY_FAILED,
-          null,
-          error,
-          { page, searchTerm, operation: "getAllPosts" }
-        );
+        console.error("DB error:", error);
         throw error;
       }
 
@@ -54,28 +40,11 @@ export class DatabaseService {
       const prev = page > 1 ? page - 1 : null;
       const next = page < totalPages ? page + 1 : null;
 
-      log.info("Posts buscados com sucesso", {
-        count: posts?.length || 0,
-        page,
-        searchTerm,
-        operation: "getAllPosts",
-      });
+      console.log("Posts fetched");
 
       return { data: posts || [], prev, next };
     } catch (error) {
-      log.error("Falha ao obter posts", {
-        error: error.message,
-        page,
-        searchTerm,
-        operation: "getAllPosts",
-      });
-      eventLogger.logEventError(
-        EVENT_STEPS.DATABASE,
-        EVENT_OPERATIONS.DB_QUERY_FAILED,
-        null,
-        error,
-        { page, searchTerm, operation: "getAllPosts" }
-      );
+      console.error("DB error:", error);
       return { data: [], prev: null, next: null };
     }
   }

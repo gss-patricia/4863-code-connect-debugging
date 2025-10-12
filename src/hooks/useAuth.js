@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../utils/supabase/client";
-import { eventLogger, EVENT_STEPS, EVENT_OPERATIONS } from "../lib/eventLogger";
 
 export const useAuth = () => {
   const [user, setUser] = useState(null);
@@ -68,15 +67,7 @@ export const useAuth = () => {
         console.error("❌ Erro ao fazer logout:", error);
       });
 
-      // 🎯 LOG: Logout bem-sucedido (fire-and-forget)
-      if (userId) {
-        eventLogger.logEvent(
-          EVENT_STEPS.AUTH,
-          EVENT_OPERATIONS.LOGOUT,
-          userId,
-          { sessionEnded: true }
-        );
-      }
+      console.log("Logout OK");
 
       setUser(null);
 

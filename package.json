@@ -2,6 +2,7 @@
   "name": "4863-code-connect-debugging",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
@@ -18,8 +19,7 @@
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.74.0",
     "remark": "^15.0.1",
-    "remark-html": "^16.0.1",
-    "winston": "^3.11.0"
+    "remark-html": "^16.0.1"
   },
   "devDependencies": {
     "eslint": "^9",
