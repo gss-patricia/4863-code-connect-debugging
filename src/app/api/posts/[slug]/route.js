@@ -36,9 +36,6 @@ export async function GET(_request, { params }) {
     const resolvedParams = await params;
     slug = resolvedParams.slug;
 
-    // 🐛 SIMULAÇÃO DE ERRO - Remover depois!
-    throw new Error("Simulação de erro no servidor para teste de logs");
-
     const post = await database.getPostBySlug(slug);
 
     if (!post) {
