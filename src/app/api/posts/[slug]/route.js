@@ -3,7 +3,8 @@ import { remark } from "remark";
 import html from "remark-html";
 import { createClient } from "../../../../utils/supabase/server";
 import {
-  eventLogger,
+  logEvent,
+  logEventWarning,
   EVENT_STEPS,
   EVENT_OPERATIONS,
 } from "../../../../lib/eventLogger";
@@ -21,12 +22,11 @@ export async function GET(_request, { params }) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      eventLogger.logEventWarning(
+      logEventWarning(
         EVENT_STEPS.API,
         EVENT_OPERATIONS.API_UNAUTHORIZED,
         null,
-        "Tentativa de acesso sem autenticação a /api/posts/[slug]",
-        { path: "/api/posts/[slug]" }
+        "Acesso sem auth a /api/posts/[slug]"
       );
       return Response.json({ error: "Não autenticado" }, { status: 401 });
     }
@@ -38,13 +38,7 @@ export async function GET(_request, { params }) {
     const post = await database.getPostBySlug(slug);
 
     if (!post) {
-      eventLogger.logEventWarning(
-        EVENT_STEPS.API,
-        EVENT_OPERATIONS.API_GET_POST_FAILED,
-        userId,
-        "Post não encontrado",
-        { slug, statusCode: 404 }
-      );
+      console.log("Post not found:", slug);
       return Response.json({ error: "Post não encontrado" }, { status: 404 });
     }
 
@@ -53,29 +47,16 @@ export async function GET(_request, { params }) {
     const contentHtml = processedContent.toString();
     post.markdown = contentHtml;
 
-    eventLogger.logEvent(
-      EVENT_STEPS.API,
-      EVENT_OPERATIONS.API_GET_POST,
-      userId,
-      {
-        slug,
-        postId: post.id,
-        statusCode: 200,
-      }
-    );
+    // ✅ Log de visualização do post via API
+    logEvent(EVENT_STEPS.API, EVENT_OPERATIONS.API_GET_POST, userId, {
+      slug,
+      postId: post.id,
+      statusCode: 200,
+    });
 
     return Response.json(post);
   } catch (error) {
-    eventLogger.logEventError(
-      EVENT_STEPS.API,
-      EVENT_OPERATIONS.API_GET_POST_FAILED,
-      userId,
-      error,
-      {
-        slug,
-        statusCode: 500,
-      }
-    );
+    console.error("API error:", error);
     return Response.json(
       { error: "Erro interno do servidor" },
       { status: 500 }

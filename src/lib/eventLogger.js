@@ -1,140 +1,102 @@
-/**
- * EVENT LOGGER
- *
- * Logger estruturado para rastrear eventos da aplicação (usuário e sistema).
- * Logs aparecem tanto localmente quanto no Vercel.
- *
- * Funciona tanto no SERVER quanto no CLIENT:
- * - Server: usa Winston (arquivos + console)
- * - Client: usa apenas console.log
- *
- * Níveis:
- * - info: Eventos normais (login, views, etc)
- * - warn: Comportamentos anormais mas não críticos
- * - error: Erros que impedem operações
- * - debug: Informações técnicas (apenas dev)
- */
+// Event Logger - Sistema de rastreamento de eventos do usuário
+// Funciona tanto no servidor (Node) quanto no cliente (Browser)
 
-// Winston só importa no servidor (não funciona no browser)
-let log = null;
+// Importar logger Winston apenas no servidor
+let logger = null;
 if (typeof window === "undefined") {
   // Estamos no servidor
-  log = require("./logger.js").log;
+  logger = (await import("../logger.js")).default;
 }
 
-// ========================================
-// DEFINIÇÃO DE STEPS E OPERATIONS
-// ========================================
-
+// Constantes para organizar os eventos
 export const EVENT_STEPS = {
   AUTH: "AUTH",
   VIEW: "VIEW",
   INTERACTION: "INTERACTION",
-  NAVIGATION: "NAVIGATION",
   API: "API",
   DATABASE: "DATABASE",
-  SYSTEM: "SYSTEM",
 };
 
 export const EVENT_OPERATIONS = {
   // AUTH
-  LOGIN_ATTEMPT: "LOGIN_ATTEMPT",
   LOGIN_SUCCESS: "LOGIN_SUCCESS",
   LOGIN_FAILED: "LOGIN_FAILED",
   LOGOUT: "LOGOUT",
-  REGISTER_ATTEMPT: "REGISTER_ATTEMPT",
   REGISTER_SUCCESS: "REGISTER_SUCCESS",
   REGISTER_FAILED: "REGISTER_FAILED",
 
   // VIEW
   VIEW_HOME: "VIEW_HOME",
   VIEW_POST_DETAILS: "VIEW_POST_DETAILS",
-  VIEW_LOGIN_PAGE: "VIEW_LOGIN_PAGE",
-  VIEW_REGISTER_PAGE: "VIEW_REGISTER_PAGE",
 
   // INTERACTION
   SUBMIT_COMMENT: "SUBMIT_COMMENT",
   SUBMIT_REPLY: "SUBMIT_REPLY",
   LIKE_POST: "LIKE_POST",
-  SEARCH: "SEARCH",
-
-  // NAVIGATION
-  NAVIGATE_TO_POST: "NAVIGATE_TO_POST",
-  NAVIGATE_TO_HOME: "NAVIGATE_TO_HOME",
 
   // API
   API_GET_POST: "API_GET_POST",
-  API_GET_POST_FAILED: "API_GET_POST_FAILED",
   API_GET_REPLIES: "API_GET_REPLIES",
-  API_GET_REPLIES_FAILED: "API_GET_REPLIES_FAILED",
   API_UNAUTHORIZED: "API_UNAUTHORIZED",
 
   // DATABASE
-  DB_QUERY_SUCCESS: "DB_QUERY_SUCCESS",
-  DB_QUERY_FAILED: "DB_QUERY_FAILED",
   DB_MUTATION_SUCCESS: "DB_MUTATION_SUCCESS",
   DB_MUTATION_FAILED: "DB_MUTATION_FAILED",
 };
 
-// ========================================
-// EVENT LOGGER CLASS
-// ========================================
+// ========== FUNÇÕES AUXILIARES (PRIVADAS) ==========
 
-class EventLogger {
-  /**
-   * Detecta o timezone do servidor ou usa UTC como fallback
-   * @returns {string} Timezone (ex: "America/Sao_Paulo", "UTC")
-   */
-  _getServerTimezone() {
-    try {
-      return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-    } catch (error) {
-      return "UTC";
-    }
+/**
+ * Captura timezone do usuário (server ou client)
+ */
+function getTimezone() {
+  if (typeof window !== "undefined") {
+    // Browser
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } else {
+    // Server (Node)
+    return process.env.TZ || Intl.DateTimeFormat().resolvedOptions().timeZone;
   }
+}
 
-  /**
-   * Formata o contexto do evento para o log com informações de timezone
-   * @param {string} userId - ID do usuário
-   * @param {object} additionalData - Dados adicionais (pode incluir userTimezone)
-   * @returns {object} Contexto formatado
-   */
-  _formatEventContext(userId, additionalData = {}) {
-    const now = new Date();
-    const serverTimezone = this._getServerTimezone();
-    const userTimezone = additionalData.userTimezone || serverTimezone;
+/**
+ * Formata o contexto do evento
+ */
+function formatEventContext(userId, additionalData = {}) {
+  return {
+    timestamp: new Date().toISOString(),
+    userId: userId || "anonymous",
+    timezone: {
+      user: getTimezone(),
+      server: process.env.TZ || "UTC",
+    },
+    environment: process.env.NODE_ENV || "development",
+    ...additionalData,
+  };
+}
 
-    // Remove userTimezone dos additionalData para não duplicar
-    const { userTimezone: _, ...restData } = additionalData;
+// ========== FUNÇÕES PRINCIPAIS (PÚBLICAS) ==========
 
-    return {
-      timestamp: now.toISOString(),
-      userId: userId || "anonymous",
-      timezone: {
-        server: serverTimezone,
-        user: userTimezone,
-      },
-      environment: process.env.NODE_ENV || "development",
-      ...restData,
-    };
-  }
+/**
+ * Log de evento (fire-and-forget, não bloqueia execução)
+ * @param {string} step - Etapa do fluxo (AUTH, VIEW, etc)
+ * @param {string} operation - Operação específica (LOGIN_SUCCESS, etc)
+ * @param {string} userId - ID do usuário
+ * @param {object} metadata - Dados adicionais
+ */
+export function logEvent(step, operation, userId, metadata = {}) {
+  const context = formatEventContext(userId, {
+    step,
+    operation,
+    ...metadata,
+  });
 
-  /**
-   * Log de evento - INFO
-   */
-  logEvent(step, operation, userId, metadata = {}) {
-    const context = this._formatEventContext(userId, {
-      step,
-      operation,
-      ...metadata,
-    });
-
-    // ✅ Se estiver no servidor, usar Winston (fire-and-forget)
-    if (log) {
-      log.info(`[EVENT] ${step} → ${operation}`, context);
-    }
-
-    // ✅ Console.log sempre (funciona server e client)
+  // SERVER: Usar Winston (se disponível)
+  if (logger) {
+    logger.info(`[EVENT] ${step} → ${operation}`, context);
+  } else {
+    // BROWSER ou SERVER sem Winston (Vercel sem file access)
+    // Log estruturado para Vercel capturar
     if (process.env.NODE_ENV !== "test") {
       console.log(
         JSON.stringify({
@@ -147,197 +109,149 @@ class EventLogger {
       );
     }
   }
+}
 
-  /**
-   * Log de warning
-   */
-  logEventWarning(step, operation, userId, warning, metadata = {}) {
-    const context = this._formatEventContext(userId, {
-      step,
-      operation,
-      warning,
-      ...metadata,
-    });
+/**
+ * Log de erro em evento
+ */
+export function logEventError(step, operation, userId, error, metadata = {}) {
+  const context = formatEventContext(userId, {
+    step,
+    operation,
+    error: error?.message || error,
+    stack: error?.stack,
+    ...metadata,
+  });
 
-    // ✅ Se estiver no servidor, usar Winston (fire-and-forget)
-    if (log) {
-      log.warn(`[EVENT_WARNING] ${step} → ${operation}: ${warning}`, context);
-    }
-
-    // ✅ Console.warn sempre (funciona server e client)
-    if (process.env.NODE_ENV !== "test") {
-      console.warn(
-        JSON.stringify({
-          type: "EVENT_WARNING",
-          level: "warn",
-          step,
-          operation,
-          warning,
-          ...context,
-        })
-      );
-    }
-  }
-
-  /**
-   * Log de erro
-   */
-  logEventError(step, operation, userId, error, metadata = {}) {
-    const context = this._formatEventContext(userId, {
-      step,
-      operation,
-      error: error?.message || error,
-      errorStack: error?.stack,
-      ...metadata,
-    });
-
-    // ✅ Se estiver no servidor, usar Winston (fire-and-forget)
-    if (log) {
-      log.error(
-        `[EVENT_ERROR] ${step} → ${operation}: ${error?.message || error}`,
-        context
-      );
-    }
-
-    // ✅ Console.error sempre (funciona server e client)
+  // SERVER: Usar Winston (se disponível)
+  if (logger) {
+    logger.error(`[EVENT ERROR] ${step} → ${operation}`, context);
+  } else {
+    // BROWSER ou SERVER sem Winston
     if (process.env.NODE_ENV !== "test") {
       console.error(
         JSON.stringify({
-          type: "EVENT_ERROR",
+          type: "EVENT",
           level: "error",
           step,
           operation,
-          error: error?.message || error,
           ...context,
         })
       );
     }
   }
+}
 
-  // ========================================
-  // HELPERS ESPECÍFICOS PARA CADA OPERAÇÃO
-  // ========================================
+/**
+ * Log de warning em evento
+ */
+export function logEventWarning(
+  step,
+  operation,
+  userId,
+  message,
+  metadata = {}
+) {
+  const context = formatEventContext(userId, {
+    step,
+    operation,
+    warning: message,
+    ...metadata,
+  });
 
-  // AUTH
-  logLogin(userId, success = true, error = null) {
-    if (success) {
-      this.logEvent(EVENT_STEPS.AUTH, EVENT_OPERATIONS.LOGIN_SUCCESS, userId, {
-        sessionStarted: true,
-      });
-    } else {
-      this.logEventError(
-        EVENT_STEPS.AUTH,
-        EVENT_OPERATIONS.LOGIN_FAILED,
-        null,
-        error
-        // ❌ Sem PII - não logar email ou dados pessoais
+  // SERVER: Usar Winston (se disponível)
+  if (logger) {
+    logger.warn(`[EVENT WARNING] ${step} → ${operation}`, context);
+  } else {
+    // BROWSER ou SERVER sem Winston
+    if (process.env.NODE_ENV !== "test") {
+      console.warn(
+        JSON.stringify({
+          type: "EVENT",
+          level: "warn",
+          step,
+          operation,
+          ...context,
+        })
       );
     }
-  }
-
-  logLogout(userId) {
-    this.logEvent(EVENT_STEPS.AUTH, EVENT_OPERATIONS.LOGOUT, userId, {
-      sessionEnded: true,
-    });
-  }
-
-  logRegister(userId, success = true, error = null) {
-    if (success) {
-      this.logEvent(
-        EVENT_STEPS.AUTH,
-        EVENT_OPERATIONS.REGISTER_SUCCESS,
-        userId,
-        { accountCreated: true }
-      );
-    } else {
-      this.logEventError(
-        EVENT_STEPS.AUTH,
-        EVENT_OPERATIONS.REGISTER_FAILED,
-        null,
-        error
-        // ❌ Sem PII - não logar email ou dados pessoais
-      );
-    }
-  }
-
-  // VIEW
-  logViewHome(userId, metadata = {}) {
-    this.logEvent(
-      EVENT_STEPS.VIEW,
-      EVENT_OPERATIONS.VIEW_HOME,
-      userId,
-      metadata
-    );
-  }
-
-  logViewPostDetails(userId, postId, postSlug, metadata = {}) {
-    this.logEvent(
-      EVENT_STEPS.VIEW,
-      EVENT_OPERATIONS.VIEW_POST_DETAILS,
-      userId,
-      {
-        postId,
-        postSlug,
-        ...metadata,
-      }
-    );
-  }
-
-  // INTERACTION
-  logSubmitComment(userId, postId, success = true, error = null) {
-    if (success) {
-      this.logEvent(
-        EVENT_STEPS.INTERACTION,
-        EVENT_OPERATIONS.SUBMIT_COMMENT,
-        userId,
-        { postId, commentCreated: true }
-      );
-    } else {
-      this.logEventError(
-        EVENT_STEPS.INTERACTION,
-        EVENT_OPERATIONS.SUBMIT_COMMENT,
-        userId,
-        error,
-        { postId }
-      );
-    }
-  }
-
-  logSubmitReply(userId, commentId, postId, success = true, error = null) {
-    if (success) {
-      this.logEvent(
-        EVENT_STEPS.INTERACTION,
-        EVENT_OPERATIONS.SUBMIT_REPLY,
-        userId,
-        { commentId, postId, replyCreated: true }
-      );
-    } else {
-      this.logEventError(
-        EVENT_STEPS.INTERACTION,
-        EVENT_OPERATIONS.SUBMIT_REPLY,
-        userId,
-        error,
-        { commentId, postId }
-      );
-    }
-  }
-
-  logLikePost(userId, postId) {
-    this.logEvent(EVENT_STEPS.INTERACTION, EVENT_OPERATIONS.LIKE_POST, userId, {
-      postId,
-    });
-  }
-
-  logSearch(userId, searchTerm, resultsCount = 0) {
-    this.logEvent(EVENT_STEPS.INTERACTION, EVENT_OPERATIONS.SEARCH, userId, {
-      searchTerm,
-      resultsCount,
-    });
   }
 }
 
-// ========================================
-// EXPORT SINGLETON
-// ========================================
+// ========== HELPERS PARA EVENTOS ESPECÍFICOS ==========
 
-export const eventLogger = new EventLogger();
+/**
+ * Log de login (sucesso ou falha)
+ */
+export function logLogin(userId, success, error = null) {
+  if (success) {
+    logEvent(EVENT_STEPS.AUTH, EVENT_OPERATIONS.LOGIN_SUCCESS, userId);
+  } else {
+    logEventError(EVENT_STEPS.AUTH, EVENT_OPERATIONS.LOGIN_FAILED, null, error);
+  }
+}
+
+/**
+ * Log de visualização da home
+ */
+export function logViewHome(userId, metadata = {}) {
+  logEvent(EVENT_STEPS.VIEW, EVENT_OPERATIONS.VIEW_HOME, userId, metadata);
+}
+
+/**
+ * Log de visualização de post
+ */
+export function logViewPost(userId, postId, slug, metadata = {}) {
+  logEvent(EVENT_STEPS.VIEW, EVENT_OPERATIONS.VIEW_POST_DETAILS, userId, {
+    postId,
+    slug,
+    ...metadata,
+  });
+}
+
+/**
+ * Log de envio de comentário
+ */
+export function logSubmitComment(userId, postId, commentCreated, error = null) {
+  if (commentCreated) {
+    logEvent(EVENT_STEPS.INTERACTION, EVENT_OPERATIONS.SUBMIT_COMMENT, userId, {
+      postId,
+      commentCreated: true,
+    });
+  } else {
+    logEventError(
+      EVENT_STEPS.INTERACTION,
+      EVENT_OPERATIONS.SUBMIT_COMMENT,
+      userId,
+      error,
+      { postId }
+    );
+  }
+}
+
+/**
+ * Log de envio de resposta
+ */
+export function logSubmitReply(
+  userId,
+  postId,
+  commentId,
+  replyCreated,
+  error = null
+) {
+  if (replyCreated) {
+    logEvent(EVENT_STEPS.INTERACTION, EVENT_OPERATIONS.SUBMIT_REPLY, userId, {
+      postId,
+      commentId,
+      replyCreated: true,
+    });
+  } else {
+    logEventError(
+      EVENT_STEPS.INTERACTION,
+      EVENT_OPERATIONS.SUBMIT_REPLY,
+      userId,
+      error,
+      { postId, commentId }
+    );
+  }
+}

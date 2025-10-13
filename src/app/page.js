@@ -1,13 +1,13 @@
 import { CardPost } from "../components/CardPost";
 import { database } from "../lib/database";
 import { createClient } from "../utils/supabase/server";
-import { eventLogger } from "../lib/eventLogger";
 import { redirect } from "next/navigation";
+import { logViewHome } from "../lib/eventLogger";
 
 import styles from "./page.module.css";
 import Link from "next/link";
 
-// ✅ Desabilitar cache para páginas protegidas
+// Desabilitar cache para páginas protegidas
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -16,8 +16,6 @@ async function getAllPosts(page, searchTerm) {
 }
 
 export default async function Home({ searchParams }) {
-  // ✅ PROTEÇÃO DE PÁGINA: Sempre usar getUser() em Server Components
-  // Nunca confiar em getSession() - cookies podem ser falsificados
   const supabase = await createClient();
   const {
     data: { user },
@@ -38,8 +36,8 @@ export default async function Home({ searchParams }) {
     next,
   } = await getAllPosts(currentPage, searchTerm);
 
-  // 🎯 USER JOURNEY LOG - View Home Page
-  eventLogger.logViewHome(user.id, {
+  // ✅ Log de visualização da home
+  logViewHome(user.id, {
     page: currentPage,
     searchTerm: searchTerm || null,
     postsCount: posts.length,

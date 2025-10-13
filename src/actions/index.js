@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { database } from "../lib/database";
 import { createClient } from "../utils/supabase/server";
-import { eventLogger } from "../lib/eventLogger";
+import { logSubmitComment, logSubmitReply } from "../lib/eventLogger";
 
 export async function incrementThumbsUp(post) {
   try {
@@ -21,9 +21,6 @@ export async function incrementThumbsUp(post) {
     await database.incrementPostLikes(post.id);
     revalidatePath("/");
     revalidatePath(`/${post.slug}`);
-
-    // 🎯 USER JOURNEY LOG - Like Post
-    eventLogger.logLikePost(user.id, post.id);
   } catch (err) {
     throw err;
   }
@@ -48,20 +45,16 @@ export async function postComment(post, formData) {
     const author = await database.getOrCreateUser(username);
 
     await database.createComment(formData.get("text"), author.id, post.id);
+
+    // ✅ Log de sucesso
+    logSubmitComment(user.id, post.id, true);
+
     revalidatePath("/");
     revalidatePath(`/${post.slug}`);
-
-    // 🎯 USER JOURNEY LOG - Submit Comment
-    eventLogger.logSubmitComment(user.id, post.id, true);
   } catch (err) {
-    // 🎯 USER JOURNEY LOG - Error
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      eventLogger.logSubmitComment(user.id, post?.id, false, err);
-    }
+    // ✅ Log de erro
+    logSubmitComment(null, post?.id, false, err);
+    console.error("Comment error:", err);
     throw err;
   }
 }
@@ -93,25 +86,15 @@ export async function postReply(parent, formData) {
 
     // Buscar o post para pegar o slug para revalidate
     const post = await database.getPostById(parent.postId);
-    revalidatePath(`/${post.slug}`);
 
-    // 🎯 USER JOURNEY LOG - Submit Reply
-    eventLogger.logSubmitReply(user.id, parent.id, parent.postId, true);
+    // ✅ Log de sucesso
+    logSubmitReply(user.id, parent.postId, parent.id, true);
+
+    revalidatePath(`/${post.slug}`);
   } catch (err) {
-    // 🎯 USER JOURNEY LOG - Error
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      eventLogger.logSubmitReply(
-        user.id,
-        parent?.id,
-        parent?.postId,
-        false,
-        err
-      );
-    }
+    // ✅ Log de erro
+    logSubmitReply(null, parent?.postId, parent?.id, false, err);
+    console.error("Reply error:", err);
     throw err;
   }
 }
