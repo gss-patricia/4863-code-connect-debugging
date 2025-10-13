@@ -5,6 +5,7 @@ import { createClient } from "../../../../utils/supabase/server";
 import {
   logEvent,
   logEventWarning,
+  logEventError,
   EVENT_STEPS,
   EVENT_OPERATIONS,
 } from "../../../../lib/eventLogger";
@@ -35,6 +36,9 @@ export async function GET(_request, { params }) {
     const resolvedParams = await params;
     slug = resolvedParams.slug;
 
+    // 🐛 SIMULAÇÃO DE ERRO - Remover depois!
+    throw new Error("Simulação de erro no servidor para teste de logs");
+
     const post = await database.getPostBySlug(slug);
 
     if (!post) {
@@ -56,6 +60,15 @@ export async function GET(_request, { params }) {
 
     return Response.json(post);
   } catch (error) {
+    // ✅ Log estruturado de erro
+    logEventError(
+      EVENT_STEPS.API,
+      EVENT_OPERATIONS.API_GET_POST,
+      userId,
+      error,
+      { slug }
+    );
+
     console.error("API error:", error);
     return Response.json(
       { error: "Erro interno do servidor" },
