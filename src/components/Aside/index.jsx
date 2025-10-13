@@ -7,7 +7,6 @@ import Link from "next/link";
 export const Aside = () => {
   return (
     <aside className={styles.aside}>
-      {/* <img src="/logo.png" alt="Logo da Code Connect" /> */}
       <Link href="/">
         <Image src={logo} alt="Logo da Code Connect" />
       </Link>
