@@ -7,7 +7,6 @@ import { createClient } from "../utils/supabase/client";
 export const useAuth = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
@@ -60,8 +59,6 @@ export const useAuth = () => {
 
   const signOut = () => {
     try {
-      const userId = user?.id; // Pegar userId antes de limpar
-
       // Fire-and-forget: não esperamos pelo signOut
       supabase.auth.signOut().catch((error) => {
         console.error("❌ Erro ao fazer logout:", error);
