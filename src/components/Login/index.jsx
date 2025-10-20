@@ -16,7 +16,6 @@ import { signIn } from "../../actions/auth";
 export const Login = () => {
   const router = useRouter();
 
-  // ❌ BUG: State não inicializado corretamente
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -26,7 +25,6 @@ export const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // ❌ BUG: Handler sem validação adequada
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -67,7 +65,6 @@ export const Login = () => {
     }
   };
 
-  // ❌ BUG: Handlers sem implementação
   const handleGithubLogin = () => {
     console.log("GitHub login");
     setErrorMessage("GitHub login não implementado");

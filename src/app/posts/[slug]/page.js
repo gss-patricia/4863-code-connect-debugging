@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { useAuth } from "../../../hooks/useAuth";
+import { useParams } from "next/navigation";
+import { useProtectedRoute } from "../../../hooks/useProtectedRoute";
 
 import styles from "./page.module.css";
 import { CardPost } from "../../../components/CardPost";
@@ -12,19 +12,10 @@ import { Spinner } from "../../../components/Spinner";
 import { postComment } from "../../../actions";
 
 const PagePost = () => {
-  // ✅ PROTEÇÃO CLIENT-SIDE: Verificar autenticação
-  const { user, loading: authLoading } = useAuth();
-  const router = useRouter();
+  // ✅ PROTEÇÃO CLIENT-SIDE: Hook customizado
+  const { user, loading: authLoading } = useProtectedRoute();
   const params = useParams();
   const slug = params.slug;
-
-  // Redirecionar se não estiver autenticado
-  useEffect(() => {
-    if (!authLoading && !user) {
-      console.log("❌ Usuário não autenticado, redirecionando...");
-      router.push("/login");
-    }
-  }, [authLoading, user, router]);
 
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
@@ -62,7 +53,7 @@ const PagePost = () => {
     if (slug && user) {
       loadPost();
     }
-  }, []); // ❌ BUG #3: falta slug e user nas dependências
+  }, []);
 
   // Handler para quando um comentário é adicionado
   const handleCommentAdded = async () => {

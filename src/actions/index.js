@@ -39,7 +39,6 @@ export async function postComment(post, formData) {
       throw new Error("Não autenticado");
     }
 
-    // ❌ BUG #4: authorId hardcoded como null
     const authorId = null;
 
     await database.createComment(formData.get("text"), authorId, post.id);
