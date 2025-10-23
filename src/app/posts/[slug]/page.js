@@ -53,7 +53,7 @@ const PagePost = () => {
     if (slug && user) {
       loadPost();
     }
-  }, []);
+  }, [slug, user]);
 
   // Handler para quando um comentário é adicionado
   const handleCommentAdded = async () => {
