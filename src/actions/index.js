@@ -27,6 +27,7 @@ export async function incrementThumbsUp(post) {
 
 export async function postComment(post, formData) {
   try {
+
     // ✅ PROTEÇÃO: Verificar autenticação e usar usuário real
     const supabase = await createClient();
     const {
@@ -39,9 +40,11 @@ export async function postComment(post, formData) {
       throw new Error("Não autenticado");
     }
 
-    const authorId = null;
+    // Buscar ou criar o usuário no banco de dados usando o email do supabase
+    const username = user.email.split("@")[0]
+    const author = await database.getOrCreateUser(username)
 
-    await database.createComment(formData.get("text"), authorId, post.id);
+    await database.createComment(formData.get("text"), author.id, post.id);
     revalidatePath("/");
     revalidatePath(`/${post.slug}`);
 
