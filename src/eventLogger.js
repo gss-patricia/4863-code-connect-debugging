@@ -1,7 +1,5 @@
-import { error } from "winston";
-
 let logger = null;
-if (typeof window === undefined) {
+if (typeof window === "undefined") {
     logger = (await import("./logger.js")).default
 }
 

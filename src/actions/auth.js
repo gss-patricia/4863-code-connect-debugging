@@ -92,13 +92,15 @@ export async function signOut() {
     const { error } = await supabase.auth.signOut();
 
     if (error) {
-      console.log("Logout error");
+      logEventError('AUTH', 'LOGOUT_FAILED', userId, error)
       return { success: false, error: error.message };
     }
 
-    console.log("Logout OK");
+    logEvent('AUTH', 'LOGOUT_SUCCESS', userId)
     return { success: true };
   } catch (err) {
+    logEventError('AUTH', 'LOGOUT_FAILED', userId, error)
+
     return { success: false, error: "Erro interno do servidor" };
   }
 }

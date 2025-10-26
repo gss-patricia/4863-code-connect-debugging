@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../utils/supabase/client";
+import { eventLogger, logEvent, logEventError } from '../eventLogger'
 
 export const useAuth = () => {
   const [user, setUser] = useState(null);
@@ -61,17 +62,18 @@ export const useAuth = () => {
     try {
       // Fire-and-forget: não esperamos pelo signOut
       supabase.auth.signOut().catch((error) => {
-        console.error("❌ Erro ao fazer logout:", error);
+        logEventError('AUTH', 'LOGOUT_FAILED', user, error)
       });
 
-      console.log("Logout OK");
+      logEvent('AUTH', 'LOGOUT_SUCCESS', user)
 
       setUser(null);
 
       // Forçar redirecionamento usando window.location para garantir limpeza total
       window.location.href = "/login";
     } catch (error) {
-      console.error("❌ Erro inesperado no logout:", error);
+      logEventError('AUTH', 'LOGOUT_FAILED', user, error)
+
       // Mesmo com erro, tenta redirecionar
       setUser(null);
       window.location.href = "/login";
