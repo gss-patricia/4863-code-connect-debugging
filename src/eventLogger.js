@@ -35,13 +35,12 @@ export function logEvent(step, operation, userId, metadata = {}) {
     }
 }
 
-// Exemplo: logEventError('AUTH', 'LOGIN_FAILED, 'user-123', error)
-export function logEventError(step, operation, userId, metadata = {}) {
+// Exemplo: logEventError('AUTH', 'LOGIN_FAILED, 'user-123', error, metadata)
+export function logEventError(step, operation, userId, error, metadata = {}) {
     const context = formatEventContext(userId, {
         step,
         operation,
-        error: error?.message || error,
-        stack: error?.stack || "",
+        error,
         ...metadata
     })
 

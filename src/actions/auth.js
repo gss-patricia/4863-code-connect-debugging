@@ -68,7 +68,7 @@ export async function signIn(email, password) {
       data.user?.id
     )
     return { success: true, data };
-  } catch (err) {
+  } catch (error) {
     logEventError(
       'AUTH',
       'LOGIN_FAILED',
