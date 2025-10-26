@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import styles from "./page.module.css";
 import Link from "next/link";
+import { logEvent } from '../eventLogger'
 
 // Desabilitar cache para páginas protegidas
 export const dynamic = "force-dynamic";
@@ -34,6 +35,8 @@ export default async function Home({ searchParams }) {
     prev,
     next,
   } = await getAllPosts(currentPage, searchTerm);
+
+  logEvent('PAGE_VIEW', 'HOME_VIEW', user.id, resolvedSearchParams)
 
   return (
     <main className={styles.grid}>
