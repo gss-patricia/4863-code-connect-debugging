@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { database } from "../lib/database";
 import { createClient } from "../utils/supabase/server";
+import { logSubmitComment, logSubmitReply } from "../lib/eventLogger";
 
 export async function incrementThumbsUp(post) {
   try {
@@ -36,7 +37,6 @@ export async function postComment(post, formData) {
     } = await supabase.auth.getUser();
 
     if (error || !user) {
-      console.log("Auth error");
       throw new Error("Não autenticado");
     }
 
@@ -47,9 +47,9 @@ export async function postComment(post, formData) {
     await database.createComment(formData.get("text"), author.id, post.id);
     revalidatePath("/");
     revalidatePath(`/${post.slug}`);
-
-    // Sem logs!
   } catch (err) {
+    // ✅ Log de erro
+    logSubmitComment(null, post?.id, false, err);
     console.error("Comment error:", err);
     throw err;
   }
@@ -82,8 +82,14 @@ export async function postReply(parent, formData) {
 
     // Buscar o post para pegar o slug para revalidate
     const post = await database.getPostById(parent.postId);
+
+    // ✅ Log de sucesso
+    logSubmitReply(user.id, parent.postId, parent.id, true);
+
     revalidatePath(`/${post.slug}`);
   } catch (err) {
+    // ✅ Log de erro
+    logSubmitReply(null, parent?.postId, parent?.id, false, err);
     console.error("Reply error:", err);
     throw err;
   }

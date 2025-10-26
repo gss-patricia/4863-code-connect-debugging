@@ -50,7 +50,7 @@ const PagePost = () => {
       }
     };
 
-    if (slug && user) {
+    if (slug) {
       loadPost();
     }
   }, [slug, user]);

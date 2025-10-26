@@ -2,6 +2,7 @@ import { CardPost } from "../components/CardPost";
 import { database } from "../lib/database";
 import { createClient } from "../utils/supabase/server";
 import { redirect } from "next/navigation";
+import { logViewHome } from "../lib/eventLogger";
 
 import styles from "./page.module.css";
 import Link from "next/link";
@@ -34,6 +35,13 @@ export default async function Home({ searchParams }) {
     prev,
     next,
   } = await getAllPosts(currentPage, searchTerm);
+
+  // ✅ Log de visualização da home
+  logViewHome(user.id, {
+    page: currentPage,
+    searchTerm: searchTerm || null,
+    postsCount: posts.length,
+  });
 
   return (
     <main className={styles.grid}>
