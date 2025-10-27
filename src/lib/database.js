@@ -1,4 +1,5 @@
 import db from "../../supabase/db";
+import logger from '../logger'
 
 // Data layer para centralizar todas as consultas do Supabase
 export class DatabaseService {
@@ -30,7 +31,14 @@ export class DatabaseService {
       const { data: posts, error, count } = await query;
 
       if (error) {
-        console.error("DB error:", error);
+        logger.error("DB:getAllPosts error", {
+          step: "DATABASE",
+          operation: "LIST_POSTS",
+          page,
+          searchTerm,
+          perPage,
+          error
+        })
         throw error;
       }
 
@@ -40,11 +48,24 @@ export class DatabaseService {
       const prev = page > 1 ? page - 1 : null;
       const next = page < totalPages ? page + 1 : null;
 
-      console.log("Posts fetched");
+      logger.info("DB:getAllPosts success", {
+        step: "DATABASE",
+        operation: "LIST_POSTS",
+        page,
+        searchTerm,
+        perPage,
+      })
 
       return { data: posts || [], prev, next };
     } catch (error) {
-      console.error("DB error:", error);
+      logger.error("DB:getAllPosts unexpected error", {
+        step: "DATABASE",
+        operation: "LIST_POSTS",
+        page,
+        searchTerm,
+        perPage,
+        error
+      })
       return { data: [], prev: null, next: null };
     }
   }
@@ -71,10 +92,23 @@ export class DatabaseService {
         .single();
 
       if (error) {
+        logger.error("DB:getPostBySlug", {
+          step: "DATABASE",
+          operation: "GET_POST_BY_SLUG",
+          slug,
+          error
+        })
+
         throw error;
       }
 
       if (!post) {
+        logger.warn("DB:getPostBySlug not_found", {
+          step: "DATABASE",
+          operation: "GET_POST_BY_SLUG",
+          slug
+        })
+
         const notFoundError = new Error(
           `Post com o slug ${slug} não foi encontrado`
         );
