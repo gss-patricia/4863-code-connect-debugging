@@ -18,9 +18,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-br" className={prompt.className}>
       <body>
-        <LayoutProvider>
-          <GrowthBookProvider>{children}</GrowthBookProvider>
-        </LayoutProvider>
+        <GrowthBookProvider>
+          <LayoutProvider>{children}</LayoutProvider>
+        </GrowthBookProvider>
       </body>
     </html>
   );

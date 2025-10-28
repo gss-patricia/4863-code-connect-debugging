@@ -1,13 +1,25 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
+import { useFeatureValue } from "@growthbook/growthbook-react";
 
 export const LastUpdateTime = () => {
-    const [time, setTime] = useState("")
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const showTime = useFeatureValue("show-update-time", false); // default: mostra
 
-    useEffect(() =>{
-        setTime(new Date().toLocaleString("pt-BR"))
-    }, [])
+  useEffect(() => {
+    const now = new Date();
+    setDate(now.toLocaleDateString("pt-BR"));
+    setTime(now.toLocaleTimeString("pt-BR"));
+  }, []);
 
-    return <time>{time || "carregando..."}</time>
-}
+  if (!date) return <time>carregando...</time>;
+
+  return (
+    <time>
+      {date}
+      {showTime && <> às {time}</>}
+    </time>
+  );
+};
