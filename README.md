@@ -1,4 +1,4 @@
-![Thumbnail escrito React: implementando técnicas modernas de Debugging e Release com Next](https://github.com/gss-patricia/4863-code-connect-debugging/blob/main/thumbnail.png?raw=true)
+![Thumbnail escrito React: implementando técnicas modernas de Debugging e Release com Next](./thumbnail.png)
 
 ![](https://img.shields.io/github/license/alura-cursos/android-com-kotlin-personalizando-ui)
 
